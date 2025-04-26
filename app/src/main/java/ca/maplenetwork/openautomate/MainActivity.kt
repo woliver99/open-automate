@@ -2,12 +2,10 @@ package ca.maplenetwork.openautomate
 
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
@@ -23,14 +21,16 @@ import rikka.shizuku.Shizuku
 import androidx.core.net.toUri
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
+const val TAG = "Open Automate"
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
     private var shizukuDlg: AlertDialog? = null
     private var shizukuListener: Shizuku.OnRequestPermissionResultListener? = null
+
+    var deviceStates: DeviceStates? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +59,20 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
         ensureShizuku {
+            deviceStates = DeviceStates(this)
             Toast.makeText(this, "App Shizuku Enabled", Toast.LENGTH_LONG).show()
+            val airplaneListener = StateListener { Log.d(TAG, "onCreate: Airplane Mode is $it") }
+            val wifiListener = StateListener { Log.d(TAG, "onCreate: WiFi is $it") }
+            val btListener = StateListener { Log.d(TAG, "onCreate: Bluetooth is $it") }
+            val locationListener = StateListener { Log.d(TAG, "onCreate: Location is $it") }
+            val wifiScanningListener = StateListener { Log.d(TAG, "onCreate: WiFi scanning is $it") }
+            val googleLocationListener = StateListener { Log.d(TAG, "onCreate: Google Location is $it") }
+            deviceStates?.airplane?.addListener(airplaneListener)
+            deviceStates?.wifi?.addListener(wifiListener)
+            deviceStates?.bluetooth?.addListener(btListener)
+            deviceStates?.location?.addListener(locationListener)
+            deviceStates?.wifiScanning?.addListener(wifiScanningListener)
+            deviceStates?.googleAccuracy?.addListener(googleLocationListener)
         }
     }
 
