@@ -31,7 +31,7 @@ class StateManager(
         return new
     }
 
-    /* ------------- subscription ------------ */
+
     fun addListener(l: StateListener) {
         if (listeners.isEmpty()) registerObserver()
         listeners += l
@@ -43,7 +43,7 @@ class StateManager(
         if (listeners.isEmpty()) unregisterObserver()
     }
 
-    /* ----------- internal plumbing ---------- */
+
     private fun registerObserver() {
         observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {

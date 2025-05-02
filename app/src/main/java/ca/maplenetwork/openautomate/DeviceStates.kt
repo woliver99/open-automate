@@ -3,23 +3,10 @@ package ca.maplenetwork.openautomate
 import android.content.Context
 import android.provider.Settings
 
-/**
- * One shared holder for all system-toggle StateManagers.
- *
- * Create exactly one instance, e.g. in Application.onCreate():
- *     val deviceStates = DeviceStates(this)
- *
- * Access anywhere:
- *     deviceStates.airplane.toggle()
- *     deviceStates.wifi.addListener { on -> … }
- */
 class DeviceStates(context: Context) {
-
     private val appCtx = context.applicationContext      // avoid leaking Activity
 
-    /* ------------------------------------------------------------------ */
-    /*  Airplane mode                                                     */
-    /* ------------------------------------------------------------------ */
+    // Airplane mode
     val airplane: StateManager by lazy {
         StateManager(
             context     = appCtx,
@@ -35,9 +22,7 @@ class DeviceStates(context: Context) {
         )
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Wi-Fi                                                             */
-    /* ------------------------------------------------------------------ */
+    // Wi-Fi
     val wifi: StateManager by lazy {
         StateManager(
             context    = appCtx,
@@ -47,9 +32,7 @@ class DeviceStates(context: Context) {
         )
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Bluetooth                                                         */
-    /* ------------------------------------------------------------------ */
+    // Bluetooth
     val bluetooth: StateManager by lazy {
         StateManager(
             context    = appCtx,
@@ -62,9 +45,7 @@ class DeviceStates(context: Context) {
         )
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Location master switch                                            */
-    /* ------------------------------------------------------------------ */
+    // Location
     val location: StateManager by lazy {
         StateManager(
             context    = appCtx,
