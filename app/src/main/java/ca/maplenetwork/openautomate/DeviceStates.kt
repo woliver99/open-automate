@@ -1,6 +1,9 @@
 package ca.maplenetwork.openautomate
 
 import android.content.Context
+import android.content.IntentFilter
+import android.location.LocationManager
+import android.os.Build
 import android.provider.Settings
 
 class DeviceStates(context: Context) {
@@ -50,6 +53,14 @@ class DeviceStates(context: Context) {
         StateManager(
             context    = appCtx,
             observeUri = Settings.Secure.getUriFor(Settings.Secure.LOCATION_MODE),
+            /*observeUri = IntentFilter().apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    addAction(LocationManager.MODE_CHANGED_ACTION)   // includes EXTRA_LOCATION_ENABLED
+                } else {
+                    // Pre-R fall-back; still delivered to third-party apps
+                    addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
+                }
+            },*/
             getState   = {
                 ShizukuShell.exec("cmd location is-location-enabled")
                     .contains("true")
@@ -60,9 +71,7 @@ class DeviceStates(context: Context) {
         )
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Google Location Accuracy                                          */
-    /* ------------------------------------------------------------------ */
+    // Google Location
     val googleAccuracy: StateManager by lazy {
         StateManager(
             context    = appCtx,
@@ -74,9 +83,7 @@ class DeviceStates(context: Context) {
         )
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Wi-Fi scanning (always-available)                                 */
-    /* ------------------------------------------------------------------ */
+    // WiFi scanning
     val wifiScanning: StateManager by lazy {
         StateManager(
             context    = appCtx,
