@@ -1,10 +1,6 @@
 package ca.maplenetwork.openautomate
 
 import android.content.Context
-import android.database.ContentObserver
-import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 
 /** Callback for state changes.  */
 fun interface StateListener {
@@ -13,53 +9,44 @@ fun interface StateListener {
 
 class StateManager(
     private val context: Context,
-    private val observeUri: Uri,
     private val getState: () -> Boolean,
     private val setState: (Boolean) -> Unit,
-    private val toggleState: (() -> Boolean)? = null
+    private val toggleState: (() -> Boolean)? = null,
+    private val source: StateChangeSource? = null       // <-- new
 ) {
     private val listeners = mutableSetOf<StateListener>()
-    private var observer: ContentObserver? = null
-    private var lastObserveState: Boolean? = null
+    private var lastValue: Boolean? = null
 
     fun get() = getState()
     fun set(v: Boolean) = setState(v)
-    fun toggle(): Boolean {
-        toggleState?.let { return it() }
+    fun toggle(): Boolean = toggleState?.invoke() ?: run {
         val new = !get()
         set(new)
-        return new
+        new
     }
 
-
     fun addListener(l: StateListener) {
-        if (listeners.isEmpty()) registerObserver()
+        if (listeners.isEmpty()) registerListener()
         listeners += l
-        l.onChanged(get())        // immediate callback
+        l.onChanged(get())      // immediate first callback
     }
 
     fun removeListener(l: StateListener) {
         listeners -= l
-        if (listeners.isEmpty()) unregisterObserver()
+        if (listeners.isEmpty()) unregisterListener()
     }
 
+    private fun registerListener() =
+        source?.register(context) { notifyListeners() }
 
-    private fun registerObserver() {
-        observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-            override fun onChange(selfChange: Boolean) {
-                val v = get()
-                println("onChange: $v, lastObserveState=$lastObserveState")
-                if (v == lastObserveState) return
-                lastObserveState = v
-                listeners.forEach { it.onChanged(v) }
-            }
-        }.also {
-            context.contentResolver.registerContentObserver(observeUri, false, it)
-        }
-    }
+    private fun unregisterListener() =
+        source?.unregister(context)
 
-    private fun unregisterObserver() {
-        observer?.let { context.contentResolver.unregisterContentObserver(it) }
-        observer = null
+    private fun notifyListeners() {
+        val value = get()
+        if (value == lastValue) return
+        lastValue = value
+        listeners.forEach { it.onChanged(value) }
     }
 }
+
