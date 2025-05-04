@@ -15,6 +15,18 @@ class PapaModeTileService : TileService() {
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val listeners = mutableListOf<Pair<StateManager, StateListener>>()
 
+    private val prefs by lazy { getSharedPreferences("papa_mode", MODE_PRIVATE) }
+    private val disableResponse : PapaModeDisableResponse
+        get() {
+            val mode = prefs.getString("disable_response", "predefined")
+            return when (mode) {
+                "predefined" -> PapaModeDisableResponse.REVERT_TO_PREDEFINED_STATES
+                "previous" -> PapaModeDisableResponse.REVERT_TO_PREVIOUS_STATES
+                else -> PapaModeDisableResponse.REVERT_TO_PREDEFINED_STATES
+            }
+        }
+
+
     override fun onClick() {
         super.onClick()
         qsTile?.apply {
@@ -25,9 +37,14 @@ class PapaModeTileService : TileService() {
         ioScope.launch {
             try {
                 if (isInPapaMode()) {
-                    revertToPreviousStates()
+                    when (disableResponse) {
+                        PapaModeDisableResponse.REVERT_TO_PREDEFINED_STATES -> revertToPredefinedStates()
+                        PapaModeDisableResponse.REVERT_TO_PREVIOUS_STATES -> revertToPreviousStates()
+                    }
                 } else {
-                    saveCurrentStates()
+                    if (disableResponse == PapaModeDisableResponse.REVERT_TO_PREVIOUS_STATES) {
+                        saveCurrentStates()
+                    }
                     applyPapaStates()
                 }
             } catch (e: IOException) {
@@ -85,17 +102,18 @@ class PapaModeTileService : TileService() {
         deviceStates.mobileData?.set(false)
     }
 
-    private fun saveCurrentStates() {
-        val prefs = getSharedPreferences("papa_mode", MODE_PRIVATE)
-        with(prefs.edit()) {
-            putBoolean("previous_airplane",    deviceStates.airplane.get())
-            putBoolean("previous_wifi",        deviceStates.wifi.get())
-            putBoolean("previous_bluetooth",   deviceStates.bluetooth.get())
-            putBoolean("previous_location",    deviceStates.location.get())
-            putBoolean("previous_wifiScan",    deviceStates.wifiScanning.get())
-            putBoolean("previous_btScan",      deviceStates.bluetoothScanning.get())
-            putBoolean("previous_mobileData",  deviceStates.mobileData?.get() ?: false)
-            apply()
+    private fun revertToPredefinedStates() {
+        DeviceStates.getAvailableStateOptions().forEach { option ->
+            val value = prefs.getBoolean("default_${option.key}", false)
+            when (option.key) {
+                "airplane" -> deviceStates.airplane.set(value)
+                "wifi"     -> deviceStates.wifi.set(value)
+                "bluetooth" -> deviceStates.bluetooth.set(value)
+                "location" -> deviceStates.location.set(value)
+                "wifiScan" -> deviceStates.wifiScanning.set(value)
+                "btScan" -> deviceStates.bluetoothScanning.set(value)
+                "mobileData" -> deviceStates.mobileData?.set(value)
+            }
         }
     }
 
@@ -110,6 +128,22 @@ class PapaModeTileService : TileService() {
         deviceStates.mobileData?.set(prefs.getBoolean("previous_mobileData",true))
     }
 
+    private fun saveCurrentStates() {
+        val prefs = getSharedPreferences("papa_mode", MODE_PRIVATE)
+        with(prefs.edit()) {
+            putBoolean("previous_airplane",    deviceStates.airplane.get())
+            putBoolean("previous_wifi",        deviceStates.wifi.get())
+            putBoolean("previous_bluetooth",   deviceStates.bluetooth.get())
+            putBoolean("previous_location",    deviceStates.location.get())
+            putBoolean("previous_wifiScan",    deviceStates.wifiScanning.get())
+            putBoolean("previous_btScan",      deviceStates.bluetoothScanning.get())
+            putBoolean("previous_mobileData",  deviceStates.mobileData?.get() ?: false)
+            apply()
+        }
+    }
+
+
+
     private fun updateTile() {
         val inPapaMode = isInPapaMode()
         qsTile?.apply {
@@ -123,4 +157,9 @@ class PapaModeTileService : TileService() {
             updateTile()
         }
     }
+}
+
+enum class PapaModeDisableResponse {
+    REVERT_TO_PREVIOUS_STATES,
+    REVERT_TO_PREDEFINED_STATES
 }

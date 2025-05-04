@@ -6,8 +6,22 @@ import android.location.LocationManager
 import android.os.Build
 import android.provider.Settings
 
+data class StateOption(val key: String, val title: String)
+
 class DeviceStates(context: Context) {
     private val appContext = context.applicationContext
+
+    companion object {
+        fun getAvailableStateOptions(): List<StateOption> = listOf(
+            StateOption("airplane", "Airplane Mode"),
+            StateOption("wifi", "Wi-Fi"),
+            StateOption("bluetooth", "Bluetooth"),
+            StateOption("location", "Location"),
+            StateOption("wifiScan", "Wi-Fi Scanning"),
+            StateOption("btScan", "Bluetooth Scanning"),
+            StateOption("mobileData", "Mobile Data")
+        )
+    }
 
     val airplane by lazy {
         val key = Settings.Global.AIRPLANE_MODE_ON

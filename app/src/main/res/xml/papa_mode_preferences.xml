@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- 1) Disable-response choice -->
+    <ListPreference
+        android:key="disable_response"
+        android:title="On Disable"
+        android:dialogTitle="When Papa Mode is turned off"
+        android:entries="@array/disable_response_entries"
+        android:entryValues="@array/disable_response_values"
+        android:defaultValue="predefined"
+        app:useSimpleSummaryProvider="true" />
+
+    <!-- 2) Predefined-defaults switches -->
+    <PreferenceCategory
+        android:title="Default States">
+        <SwitchPreferenceCompat
+            android:key="default_airplane"
+            android:title="Airplane Mode"
+            android:defaultValue="false" />
+
+        <SwitchPreferenceCompat
+            android:key="default_wifi"
+            android:title="Wi-Fi"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="default_bluetooth"
+            android:title="Bluetooth"
+            android:defaultValue="false" />
+
+        <SwitchPreferenceCompat
+            android:key="default_location"
+            android:title="Location"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="default_wifiScan"
+            android:title="Wi-Fi Scanning"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="default_btScan"
+            android:title="Bluetooth Scanning"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="default_mobileData"
+            android:title="Mobile Data"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

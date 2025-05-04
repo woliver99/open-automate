@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="disable_response_entries">
+        <item>Revert to Predefined States</item>
+        <item>Revert to Previous States</item>
+    </string-array>
+    <string-array name="disable_response_values">
+        <item>predefined</item>
+        <item>previous</item>
+    </string-array>
+</resources>

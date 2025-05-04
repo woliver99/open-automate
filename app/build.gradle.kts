@@ -39,6 +39,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.preference.ktx)
     val shizukuVersion = "13.1.5"      // bump when a newer tag appears
 
     implementation("dev.rikka.shizuku:api:$shizukuVersion")

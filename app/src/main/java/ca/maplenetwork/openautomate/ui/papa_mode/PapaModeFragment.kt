@@ -7,35 +7,20 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreferenceCompat
+import ca.maplenetwork.openautomate.DeviceStates
+import ca.maplenetwork.openautomate.R
 import ca.maplenetwork.openautomate.databinding.FragmentPapaModeBinding
 
-class PapaModeFragment : Fragment() {
+class PapaModeFragment : PreferenceFragmentCompat() {
 
-    private var _binding: FragmentPapaModeBinding? = null
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        // Tell it which SharedPreferences file to use
+        preferenceManager.sharedPreferencesName = "papa_mode"
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        val papaModeViewModel = ViewModelProvider(this)[PapaModeViewModel::class.java]
-
-        _binding = FragmentPapaModeBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-
-        val textView: TextView = binding.textPapaMode
-        papaModeViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
-        }
-        return root
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+        // Inflate the XML we just created
+        setPreferencesFromResource(R.xml.papa_mode_preferences, rootKey)
     }
 }
