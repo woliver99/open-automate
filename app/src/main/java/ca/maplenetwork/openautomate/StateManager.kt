@@ -2,17 +2,18 @@ package ca.maplenetwork.openautomate
 
 import android.content.Context
 
-/** Callback for state changes.  */
+
 fun interface StateListener {
     fun onChanged(newValue: Boolean)
 }
+
 
 class StateManager(
     private val context: Context,
     private val getState: () -> Boolean,
     private val setState: (Boolean) -> Unit,
     private val toggleState: (() -> Boolean)? = null,
-    private val source: StateChangeSource? = null       // <-- new
+    private val source: StateChangeSource? = null
 ) {
     private val listeners = mutableSetOf<StateListener>()
     private var lastValue: Boolean? = null

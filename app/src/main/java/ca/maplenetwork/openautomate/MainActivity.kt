@@ -3,6 +3,7 @@ package ca.maplenetwork.openautomate
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.Menu
 import android.widget.Toast
@@ -95,6 +96,26 @@ class MainActivity : AppCompatActivity() {
 
     private fun ensureShizuku(onGranted: () -> Unit) {
 
+        fun showInstallDialog() {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Shizuku not found")
+                .setMessage(
+                    "This app needs the Shizuku service. Install it, start the service, then reopen the app."
+                )
+                .setCancelable(false)
+                .setPositiveButton("Get Shizuku") { _, _ ->
+                    startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            "https://github.com/RikkaApps/Shizuku".toUri()
+                        )
+                    )
+                    finish()
+                }
+                .setNegativeButton("Close") { _, _ -> finish() }
+                .show()
+        }
+
         fun showDialog(showToast: Boolean = false) {
             /* 1️⃣ abort if Activity is finishing or destroyed */
             if (isFinishing || isDestroyed) return
@@ -112,21 +133,11 @@ class MainActivity : AppCompatActivity() {
                 if (shizukuDlg?.isShowing == true) return@runOnUiThread
 
                 shizukuDlg = MaterialAlertDialogBuilder(this)
-                    .setTitle("Shizuku required")
+                    .setTitle("Shizuku permission required")
                     .setMessage(
-                        "This app can only run when the Shizuku service is " +
-                                "installed, started, and its permission is granted."
+                        "This app relies on Shizuku to function. Please grant Shizuku permission to continue."
                     )
                     .setCancelable(false)
-                    .setNeutralButton("Shizuku") { _, _ ->
-                        startActivity(
-                            Intent(
-                                Intent.ACTION_VIEW,
-                                "https://github.com/RikkaApps/Shizuku".toUri()
-                            )
-                        )
-                        finish()
-                    }
                     .setNegativeButton("Close") { _, _ -> finish() }
                     .setPositiveButton("Request") { _, _ ->
                         Shizuku.requestPermission(0x5A11)
@@ -150,14 +161,20 @@ class MainActivity : AppCompatActivity() {
         shizukuListener = listener
 
         /* ---------------- initial flow ---------------------------- */
+        if (!Shizuku.pingBinder()) {          // ↩︎ binder not present → Shizuku missing
+            showInstallDialog()               // (defined just below)
+            return
+        }
+
         if (Shizuku.isPreV11()) {
-            Toast.makeText(this,
-                "Shizuku v11+ is required", Toast.LENGTH_LONG).show()
-            finish(); return
+            Toast.makeText(this, "Shizuku v11+ is required", Toast.LENGTH_LONG).show()
+            finish()
+            return
         }
 
         if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
-            onGranted(); return
+            onGranted()
+            return
         }
 
         Shizuku.addRequestPermissionResultListener(listener)
