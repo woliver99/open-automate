@@ -1,12 +1,15 @@
 package ca.maplenetwork.openautomate
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.IntentFilter
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.core.net.toUri
+import rikka.shizuku.Shizuku
 
 class DeviceStates(context: Context) {
     private val appContext = context.applicationContext
@@ -15,8 +18,8 @@ class DeviceStates(context: Context) {
         val key = Settings.Global.AIRPLANE_MODE_ON
         StateManager(
             context   = appContext,
-            getState  = { BetterShell.exec("cmd connectivity airplane-mode").contains("enabled") },
-            setState  = { on -> BetterShell.exec("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}") },
+            getState  = { Shell.exec("cmd connectivity airplane-mode").contains("enabled") },
+            setState  = { on -> Shell.exec("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}") },
             source    = UriSource(Settings.Global.getUriFor(key))
         )
     }
@@ -27,10 +30,10 @@ class DeviceStates(context: Context) {
         StateManager(
             context   = appContext,
             getState  = {
-                val value =BetterShell.exec("settings get global $key")
+                val value =Shell.exec("settings get global $key")
                 (value == "1") || (value == "2")
             },
-            setState  = { on -> BetterShell.exec("svc wifi ${if (on) "enable" else "disable"}") },
+            setState  = { on -> Shell.exec("svc wifi ${if (on) "enable" else "disable"}") },
             source    = UriSource(Settings.Global.getUriFor(key))
         )
     }
@@ -41,9 +44,9 @@ class DeviceStates(context: Context) {
         val key = Settings.Global.BLUETOOTH_ON
         StateManager(
             context   = appContext,
-            getState  = { BetterShell.exec("settings get global $key") == "1" },
+            getState  = { Shell.exec("settings get global $key") == "1" },
             setState  = { on ->
-                BetterShell.exec("svc bluetooth ${if (on) "enable" else "disable"}")
+                Shell.exec("svc bluetooth ${if (on) "enable" else "disable"}")
             },
             source    = UriSource(Settings.Global.getUriFor(Settings.Global.BLUETOOTH_ON))
         )
@@ -59,8 +62,8 @@ class DeviceStates(context: Context) {
         }
         StateManager(
             context   = appContext,
-            getState  = { BetterShell.exec("cmd location is-location-enabled").contains("true") },
-            setState  = { on -> BetterShell.exec("cmd location set-location-enabled $on") },
+            getState  = { Shell.exec("cmd location is-location-enabled").contains("true") },
+            setState  = { on -> Shell.exec("cmd location set-location-enabled $on") },
             source    = IntentSource(filter)
         )
     }
@@ -71,7 +74,7 @@ class DeviceStates(context: Context) {
 
             /* ── read the single row only ── */
             getState = {
-                val out = BetterShell.exec(
+                val out = Shell.exec(
                     "content query " +
                             "--uri content://com.google.settings/partner " +
                             "--projection value " +
@@ -85,14 +88,14 @@ class DeviceStates(context: Context) {
             setState = { on ->
                 val v = if (on) 1 else 0
                 // try update first (faster, no dup rows). Falls back to insert = upsert.
-                val upd = BetterShell.exec(
+                val upd = Shell.exec(
                     "content update " +
                             "--uri content://com.google.settings/partner " +
                             "--bind value:i:$v " +
                             "--where \"name='network_location_opt_in'\""
                 )
                 if (upd.contains("Updated 0 rows")) {
-                    BetterShell.exec(
+                    Shell.exec(
                         "content insert --uri content://com.google.settings/partner " +
                                 "--bind name:s:network_location_opt_in --bind value:i:$v"
                     )
@@ -108,9 +111,9 @@ class DeviceStates(context: Context) {
         val key = "wifi_scan_always_enabled"
         StateManager(
             context    = appContext,
-            getState   = { BetterShell.exec("settings get global $key") == "1" },
+            getState   = { Shell.exec("settings get global $key") == "1" },
             setState   = { on ->
-                BetterShell.exec("settings put global $key ${if (on) 1 else 0}")
+                Shell.exec("settings put global $key ${if (on) 1 else 0}")
             },
             source     = UriSource(Settings.Global.getUriFor(key))
         )
@@ -120,9 +123,9 @@ class DeviceStates(context: Context) {
         val key = "ble_scan_always_enabled"
         StateManager(
             context = appContext,
-            getState = { BetterShell.exec("settings get global $key") == "1" },
+            getState = { Shell.exec("settings get global $key") == "1" },
             setState = { on ->
-                BetterShell.exec("settings put global $key ${if (on) 1 else 0}")
+                Shell.exec("settings put global $key ${if (on) 1 else 0}")
             },
             source  = UriSource(Settings.Global.getUriFor(key))
         )
@@ -150,16 +153,16 @@ class DeviceStates(context: Context) {
     private fun setMobileDataVariable(key: String) {
         mobileData = StateManager(
             context  = appContext,
-            getState = { BetterShell.exec("settings get global $key") == "1" },
+            getState = { Shell.exec("settings get global $key") == "1" },
             setState = { on ->
-                BetterShell.exec("svc data ${if (on) "enable" else "disable"}")
+                Shell.exec("svc data ${if (on) "enable" else "disable"}")
             },
             source   = UriSource(Settings.Global.getUriFor(key))
         )
     }
 
     private fun listMobileDataOptions(): List<String> {
-        val raw = BetterShell.exec("settings list global mobile_data")
+        val raw = Shell.exec("settings list global mobile_data")
 
         val prefix = "mobile_data"
         return raw.lineSequence()
@@ -171,7 +174,7 @@ class DeviceStates(context: Context) {
     }
 
     private fun getDataSimSuffix(): String {
-        val raw = BetterShell.exec("settings get global multi_sim_data_call")
+        val raw = Shell.exec("settings get global multi_sim_data_call")
         return raw
     }
 }

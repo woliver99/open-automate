@@ -39,10 +39,12 @@ android {
 }
 
 dependencies {
-    val libsuVersion = "6.0.0"
+    val shizukuVersion = "13.1.5"      // bump when a newer tag appears
 
-    implementation("com.github.topjohnwu.libsu:core:${libsuVersion}")     // shell API
-    implementation("com.github.topjohnwu.libsu:service:${libsuVersion}")  // (optional) root services
+    implementation("dev.rikka.shizuku:api:$shizukuVersion")
+    implementation("dev.rikka.shizuku:provider:$shizukuVersion")
+
+    implementation("com.google.android.material:material:1.12.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
