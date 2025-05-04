@@ -1,12 +1,15 @@
 package ca.maplenetwork.openautomate
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.IntentFilter
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.core.net.toUri
+import rikka.shizuku.Shizuku
 
 class DeviceStates(context: Context) {
     private val appContext = context.applicationContext
@@ -69,29 +72,37 @@ class DeviceStates(context: Context) {
         StateManager(
             context = appContext,
 
-            // ─── read current “network_location_opt_in” value ───
+            /* ── read the single row only ── */
             getState = {
-                // run the same “content query” you did in ADB
                 val out = Shell.exec(
-                    "content query --uri content://com.google.settings/partner --projection name,value"
+                    "content query " +
+                            "--uri content://com.google.settings/partner " +
+                            "--projection value " +
+                            "--where \"name='network_location_opt_in'\""
                 )
-                // find the line for our key and parse the “value=…” tail
-                out.lineSequence()
-                    .firstOrNull { it.contains("network_location_opt_in") }
-                    ?.substringAfter("value=")
-                    ?.toIntOrNull() == 1
+                // output looks like: Row: 0 value=1
+                out.contains("value=1")
             },
 
-            // ─── write new value (0 or 1) ───
+            /* ── write via update or insert ── */
             setState = { on ->
                 val v = if (on) 1 else 0
-                // delete any existing row first, so insert won’t duplicate
-                Shell.exec("su -c content delete --uri content://com.google.settings/partner --where \"name='network_location_opt_in'\"")
-                // now insert the new value
-                Shell.exec("su -c content insert --uri content://com.google.settings/partner --bind name:s:network_location_opt_in --bind value:i:$v")
+                // try update first (faster, no dup rows). Falls back to insert = upsert.
+                val upd = Shell.exec(
+                    "content update " +
+                            "--uri content://com.google.settings/partner " +
+                            "--bind value:i:$v " +
+                            "--where \"name='network_location_opt_in'\""
+                )
+                if (upd.contains("Updated 0 rows")) {
+                    Shell.exec(
+                        "content insert --uri content://com.google.settings/partner " +
+                                "--bind name:s:network_location_opt_in --bind value:i:$v"
+                    )
+                }
             },
 
-            // ─── observe changes via a ContentObserver on the partner URI ───
+            /* ── observe provider changes ── */
             source = UriSource("content://com.google.settings/partner".toUri())
         )
     }

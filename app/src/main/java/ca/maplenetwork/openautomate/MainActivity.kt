@@ -62,6 +62,7 @@ class MainActivity : AppCompatActivity() {
         ensureShizuku {
             deviceStates = DeviceStates(this)
             Toast.makeText(this, "App Shizuku Enabled", Toast.LENGTH_LONG).show()
+            deviceStates?.googleAccuracy?.addListener({ googleAccuracy -> Log.d(TAG, "Google Accuracy: $googleAccuracy") })
         }
     }
 

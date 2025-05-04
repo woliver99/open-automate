@@ -1,6 +1,7 @@
 package ca.maplenetwork.openautomate
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
