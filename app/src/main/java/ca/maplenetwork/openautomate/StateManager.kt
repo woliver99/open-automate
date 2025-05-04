@@ -1,7 +1,6 @@
 package ca.maplenetwork.openautomate
 
 import android.content.Context
-import android.util.Log
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
@@ -36,7 +35,7 @@ class StateManager(
     fun addListener(l: StateListener) {
         if (listeners.isEmpty()) registerListener()
         listeners += l
-        l.onChanged(get())      // immediate first callback
+        //l.onChanged(get())      // immediate first callback
     }
 
     fun removeListener(l: StateListener) {
@@ -70,7 +69,7 @@ suspend fun StateManager.toggleAndAwait(expected: Boolean): Boolean {
     toggle()
 
     // wait at most 3 s for the expected value
-    return withTimeoutOrNull(5.seconds) {
+    return withTimeoutOrNull(3.seconds) {
         flow
             .onEach { /*   debug each step if you like   */ }
             .first { it == expected }

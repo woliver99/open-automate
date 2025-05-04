@@ -1,15 +1,10 @@
 package ca.maplenetwork.openautomate
 
-import android.content.ContentValues
 import android.content.Context
 import android.content.IntentFilter
 import android.location.LocationManager
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
-import androidx.core.net.toUri
-import rikka.shizuku.Shizuku
 
 class DeviceStates(context: Context) {
     private val appContext = context.applicationContext
