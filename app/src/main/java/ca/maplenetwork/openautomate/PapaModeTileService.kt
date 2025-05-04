@@ -1,27 +1,39 @@
 package ca.maplenetwork.openautomate
 
+import android.graphics.drawable.Icon
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import java.io.IOException
 
 class PapaModeTileService : TileService() {
-    private lateinit var deviceStates: DeviceStates
+    private val deviceStates by lazy { DeviceStates(applicationContext) }
+    private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val listeners = mutableListOf<Pair<StateManager, StateListener>>()
-
-    override fun onCreate() {
-        super.onCreate()
-        deviceStates = DeviceStates(applicationContext)
-    }
 
     override fun onClick() {
         super.onClick()
-        if (isInPapaMode()) {
-            revertToUserDefaults()
-        } else {
-            saveUserDefaults()
-            applyPapaStates()
+        qsTile?.apply {
+            state = Tile.STATE_UNAVAILABLE
+            updateTile()
         }
-        updateTile()
+
+        ioScope.launch {
+            try {
+                if (isInPapaMode()) {
+                    revertToPreviousStates()
+                } else {
+                    saveCurrentStates()
+                    applyPapaStates()
+                }
+            } catch (e: IOException) {
+                Log.e("PapaModeTile", "Shell.exec failed", e)
+            }
+        }
     }
 
     override fun onStartListening() {
@@ -73,35 +85,41 @@ class PapaModeTileService : TileService() {
         deviceStates.mobileData?.set(false)
     }
 
-    private fun saveUserDefaults() {
+    private fun saveCurrentStates() {
         val prefs = getSharedPreferences("papa_mode", MODE_PRIVATE)
         with(prefs.edit()) {
-            putBoolean("def_airplane",    deviceStates.airplane.get())
-            putBoolean("def_wifi",        deviceStates.wifi.get())
-            putBoolean("def_bluetooth",   deviceStates.bluetooth.get())
-            putBoolean("def_location",    deviceStates.location.get())
-            putBoolean("def_wifiScan",    deviceStates.wifiScanning.get())
-            putBoolean("def_btScan",      deviceStates.bluetoothScanning.get())
-            putBoolean("def_mobileData",  deviceStates.mobileData?.get() ?: false)
+            putBoolean("previous_airplane",    deviceStates.airplane.get())
+            putBoolean("previous_wifi",        deviceStates.wifi.get())
+            putBoolean("previous_bluetooth",   deviceStates.bluetooth.get())
+            putBoolean("previous_location",    deviceStates.location.get())
+            putBoolean("previous_wifiScan",    deviceStates.wifiScanning.get())
+            putBoolean("previous_btScan",      deviceStates.bluetoothScanning.get())
+            putBoolean("previous_mobileData",  deviceStates.mobileData?.get() ?: false)
             apply()
         }
     }
 
-    private fun revertToUserDefaults() {
+    private fun revertToPreviousStates() {
         val prefs = getSharedPreferences("papa_mode", MODE_PRIVATE)
-        deviceStates.airplane.set(   prefs.getBoolean("def_airplane",    false))
-        deviceStates.wifi.set(       prefs.getBoolean("def_wifi",        true))
-        deviceStates.bluetooth.set(  prefs.getBoolean("def_bluetooth",   false))
-        deviceStates.location.set(   prefs.getBoolean("def_location",    true))
-        deviceStates.wifiScanning.set(prefs.getBoolean("def_wifiScan",   true))
-        deviceStates.bluetoothScanning.set(prefs.getBoolean("def_btScan",true))
-        deviceStates.mobileData?.set(prefs.getBoolean("def_mobileData",  true))
+        deviceStates.airplane.set(prefs.getBoolean("previous_airplane",false))
+        deviceStates.wifi.set(prefs.getBoolean("previous_wifi",true))
+        deviceStates.bluetooth.set(prefs.getBoolean("previous_bluetooth",false))
+        deviceStates.location.set(prefs.getBoolean("previous_location",true))
+        deviceStates.wifiScanning.set(prefs.getBoolean("previous_wifiScan",true))
+        deviceStates.bluetoothScanning.set(prefs.getBoolean("previous_btScan",true))
+        deviceStates.mobileData?.set(prefs.getBoolean("previous_mobileData",true))
     }
 
     private fun updateTile() {
+        val inPapaMode = isInPapaMode()
         qsTile?.apply {
-            state = if (isInPapaMode()) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-            label = "Papa Mode"
+            state = if (inPapaMode) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+            icon = Icon.createWithResource(this@PapaModeTileService,
+                if (isInPapaMode())
+                    R.drawable.cloud_off_24dp_e8eaed_fill0_wght400_grad0_opsz24
+                else
+                    R.drawable.cloud_24dp_e8eaed_fill0_wght400_grad0_opsz24
+            )
             updateTile()
         }
     }
