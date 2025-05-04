@@ -12,14 +12,9 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="ca.maplenetwork.openautomate.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        android:id="@+id/nav_papa_mode"
+        android:name="ca.maplenetwork.openautomate.ui.papa_mode.PapaModeFragment"
+        android:label="@string/menu_papa_mode"
+        tools:layout="@layout/fragment_papa_mode" />
 
-    <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="ca.maplenetwork.openautomate.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
 </navigation>

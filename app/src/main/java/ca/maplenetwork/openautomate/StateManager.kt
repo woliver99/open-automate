@@ -35,7 +35,7 @@ class StateManager(
     fun addListener(l: StateListener) {
         if (listeners.isEmpty()) registerListener()
         listeners += l
-        //l.onChanged(get())      // immediate first callback
+        l.onChanged(get())      // immediate first callback
     }
 
     fun removeListener(l: StateListener) {
