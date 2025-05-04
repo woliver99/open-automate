@@ -6,6 +6,7 @@ import android.location.LocationManager
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
+import androidx.core.net.toUri
 
 class DeviceStates(context: Context) {
     private val appContext = context.applicationContext
@@ -14,18 +15,22 @@ class DeviceStates(context: Context) {
         val key = Settings.Global.AIRPLANE_MODE_ON
         StateManager(
             context   = appContext,
-            getState  = { ShizukuShell.exec("cmd connectivity airplane-mode").contains("enabled") },
-            setState  = { on -> ShizukuShell.exec("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}") },
+            getState  = { Shell.exec("cmd connectivity airplane-mode").contains("enabled") },
+            setState  = { on -> Shell.exec("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}") },
             source    = UriSource(Settings.Global.getUriFor(key))
         )
     }
 
     val wifi by lazy {
         val key = Settings.Global.WIFI_ON
+        Log.d(TAG, "wifi: $key")
         StateManager(
             context   = appContext,
-            getState  = { ShizukuShell.exec("settings get global $key") == "1" },
-            setState  = { on -> ShizukuShell.exec("svc wifi ${if (on) "enable" else "disable"}") },
+            getState  = {
+                val value =Shell.exec("settings get global $key")
+                (value == "1") || (value == "2")
+            },
+            setState  = { on -> Shell.exec("svc wifi ${if (on) "enable" else "disable"}") },
             source    = UriSource(Settings.Global.getUriFor(key))
         )
     }
@@ -36,10 +41,9 @@ class DeviceStates(context: Context) {
         val key = Settings.Global.BLUETOOTH_ON
         StateManager(
             context   = appContext,
-            getState  = { ShizukuShell.exec("settings get global $key") == "1" },
+            getState  = { Shell.exec("settings get global $key") == "1" },
             setState  = { on ->
-                val code = if (on) 6 else 8
-                ShizukuShell.exec("service call bluetooth_manager $code")
+                Shell.exec("svc bluetooth ${if (on) "enable" else "disable"}")
             },
             source    = UriSource(Settings.Global.getUriFor(Settings.Global.BLUETOOTH_ON))
         )
@@ -55,21 +59,40 @@ class DeviceStates(context: Context) {
         }
         StateManager(
             context   = appContext,
-            getState  = { ShizukuShell.exec("cmd location is-location-enabled").contains("true") },
-            setState  = { on -> ShizukuShell.exec("cmd location set-location-enabled $on") },
+            getState  = { Shell.exec("cmd location is-location-enabled").contains("true") },
+            setState  = { on -> Shell.exec("cmd location set-location-enabled $on") },
             source    = IntentSource(filter)
         )
     }
 
     val googleAccuracy by lazy {
-        val key = "assisted_gps_enabled"
         StateManager(
-            context   = appContext,
-            getState  = { ShizukuShell.exec("settings get global $key") == "1" },
-            setState  = { on ->
-                ShizukuShell.exec("settings put secure $key ${if (on) 1 else 0}")
+            context = appContext,
+
+            // ─── read current “network_location_opt_in” value ───
+            getState = {
+                // run the same “content query” you did in ADB
+                val out = Shell.exec(
+                    "content query --uri content://com.google.settings/partner --projection name,value"
+                )
+                // find the line for our key and parse the “value=…” tail
+                out.lineSequence()
+                    .firstOrNull { it.contains("network_location_opt_in") }
+                    ?.substringAfter("value=")
+                    ?.toIntOrNull() == 1
             },
-            source    = UriSource(Settings.Global.getUriFor(key))
+
+            // ─── write new value (0 or 1) ───
+            setState = { on ->
+                val v = if (on) 1 else 0
+                // delete any existing row first, so insert won’t duplicate
+                Shell.exec("su -c content delete --uri content://com.google.settings/partner --where \"name='network_location_opt_in'\"")
+                // now insert the new value
+                Shell.exec("su -c content insert --uri content://com.google.settings/partner --bind name:s:network_location_opt_in --bind value:i:$v")
+            },
+
+            // ─── observe changes via a ContentObserver on the partner URI ───
+            source = UriSource("content://com.google.settings/partner".toUri())
         )
     }
 
@@ -77,9 +100,9 @@ class DeviceStates(context: Context) {
         val key = "wifi_scan_always_enabled"
         StateManager(
             context    = appContext,
-            getState   = { ShizukuShell.exec("settings get global $key") == "1" },
+            getState   = { Shell.exec("settings get global $key") == "1" },
             setState   = { on ->
-                ShizukuShell.exec("settings put global $key ${if (on) 1 else 0}")
+                Shell.exec("settings put global $key ${if (on) 1 else 0}")
             },
             source     = UriSource(Settings.Global.getUriFor(key))
         )
@@ -89,9 +112,9 @@ class DeviceStates(context: Context) {
         val key = "ble_scan_always_enabled"
         StateManager(
             context = appContext,
-            getState = { ShizukuShell.exec("settings get global $key") == "1" },
+            getState = { Shell.exec("settings get global $key") == "1" },
             setState = { on ->
-                ShizukuShell.exec("settings put global $key ${if (on) 1 else 0}")
+                Shell.exec("settings put global $key ${if (on) 1 else 0}")
             },
             source  = UriSource(Settings.Global.getUriFor(key))
         )
@@ -119,16 +142,16 @@ class DeviceStates(context: Context) {
     private fun setMobileDataVariable(key: String) {
         mobileData = StateManager(
             context  = appContext,
-            getState = { ShizukuShell.exec("settings get global $key") == "1" },
+            getState = { Shell.exec("settings get global $key") == "1" },
             setState = { on ->
-                ShizukuShell.exec("svc data ${if (on) "enable" else "disable"}")
+                Shell.exec("svc data ${if (on) "enable" else "disable"}")
             },
             source   = UriSource(Settings.Global.getUriFor(key))
         )
     }
 
     private fun listMobileDataOptions(): List<String> {
-        val raw = ShizukuShell.exec("settings list global mobile_data")
+        val raw = Shell.exec("settings list global mobile_data")
 
         val prefix = "mobile_data"
         return raw.lineSequence()
@@ -140,7 +163,7 @@ class DeviceStates(context: Context) {
     }
 
     private fun getDataSimSuffix(): String {
-        val raw = ShizukuShell.exec("settings get global multi_sim_data_call")
+        val raw = Shell.exec("settings get global multi_sim_data_call")
         return raw
     }
 }

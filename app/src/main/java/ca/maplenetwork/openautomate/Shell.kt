@@ -7,7 +7,7 @@ import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
 
-object ShizukuShell {
+object Shell {
 
     private fun requireService(): IShizukuService =
         IShizukuService.Stub.asInterface(

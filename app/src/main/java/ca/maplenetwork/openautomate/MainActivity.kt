@@ -62,18 +62,6 @@ class MainActivity : AppCompatActivity() {
         ensureShizuku {
             deviceStates = DeviceStates(this)
             Toast.makeText(this, "App Shizuku Enabled", Toast.LENGTH_LONG).show()
-            val airplaneListener = StateListener { Log.d(TAG, "onCreate: Airplane Mode is $it") }
-            val wifiListener = StateListener { Log.d(TAG, "onCreate: WiFi is $it") }
-            val btListener = StateListener { Log.d(TAG, "onCreate: Bluetooth is $it") }
-            val locationListener = StateListener { Log.d(TAG, "onCreate: Location is $it") }
-            val wifiScanningListener = StateListener { Log.d(TAG, "onCreate: WiFi scanning is $it") }
-            val googleLocationListener = StateListener { Log.d(TAG, "onCreate: Google Location is $it") }
-            deviceStates?.airplane?.addListener(airplaneListener)
-            deviceStates?.wifi?.addListener(wifiListener)
-            deviceStates?.bluetooth?.addListener(btListener)
-            deviceStates?.location?.addListener(locationListener)
-            deviceStates?.wifiScanning?.addListener(wifiScanningListener)
-            deviceStates?.googleAccuracy?.addListener(googleLocationListener)
         }
     }
 
