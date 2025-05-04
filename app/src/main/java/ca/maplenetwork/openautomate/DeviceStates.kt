@@ -178,7 +178,7 @@ class DeviceStates(context: Context) {
         return raw
     }
 
-    fun hasAnySim(): Boolean {
+    private fun hasAnySim(): Boolean {
         val simStates = Shell.exec("getprop gsm.sim.state")
             .split(",")
             .map(String::trim)
