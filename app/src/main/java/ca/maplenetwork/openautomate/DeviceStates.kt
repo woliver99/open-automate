@@ -26,7 +26,6 @@ class DeviceStates(context: Context) {
 
     val wifi by lazy {
         val key = Settings.Global.WIFI_ON
-        Log.d(TAG, "wifi: $key")
         StateManager(
             context   = appContext,
             getState  = {
@@ -68,7 +67,8 @@ class DeviceStates(context: Context) {
         )
     }
 
-    val googleAccuracy by lazy {
+    // Would probably need to use logcat to listen for changes
+    /*val googleAccuracy by lazy {
         StateManager(
             context = appContext,
 
@@ -105,7 +105,7 @@ class DeviceStates(context: Context) {
             /* ── observe provider changes ── */
             source = UriSource("content://com.google.settings/partner".toUri())
         )
-    }
+    }*/
 
     val wifiScanning by lazy {
         val key = "wifi_scan_always_enabled"
@@ -134,7 +134,7 @@ class DeviceStates(context: Context) {
     init {
         val mobileDataOptions = listMobileDataOptions()
 
-        if (mobileDataOptions.isEmpty()) {
+        if (mobileDataOptions.isEmpty() || !hasAnySim()) {
             mobileData = null
         } else if (mobileDataOptions.size == 1) {
             val key = mobileDataOptions[0]
@@ -176,5 +176,17 @@ class DeviceStates(context: Context) {
     private fun getDataSimSuffix(): String {
         val raw = Shell.exec("settings get global multi_sim_data_call")
         return raw
+    }
+
+    fun hasAnySim(): Boolean {
+        val simStates = Shell.exec("getprop gsm.sim.state")
+            .split(",")
+            .map(String::trim)
+
+        // Define which states count as “SIM present”
+        val presentStates = setOf("READY", "LOADED", "PIN_REQUIRED", "PUK_REQUIRED")
+
+        // Return true if any slot is in a “present” state
+        return simStates.any { it.uppercase() in presentStates }
     }
 }

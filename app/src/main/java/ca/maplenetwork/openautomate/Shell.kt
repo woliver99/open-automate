@@ -20,18 +20,12 @@ object Shell {
             "Shizuku permission missing"
         }
 
-        val proc = requireService().newProcess(arrayOf("sh", "-c", cmd), null, null)
-
-        val out = BufferedReader(
-            InputStreamReader(FileInputStream(proc.inputStream.fileDescriptor))
-        ).use { it.readText() }
-
-        val err = BufferedReader(
-            InputStreamReader(FileInputStream(proc.errorStream.fileDescriptor))
-        ).use { it.readText() }
-
-        proc.waitFor()        // optional; streams already consumed
-        return (out + err).trimEnd()
+        val mergedCmd = "$cmd 2>&1"
+        val proc = requireService().newProcess(arrayOf("sh","-c", mergedCmd), null, null)
+        val output = BufferedReader(InputStreamReader(FileInputStream(proc.inputStream.fileDescriptor)))
+            .use { it.readText() }
+        proc.waitFor()
+        return output.trimEnd()
     }
 }
 

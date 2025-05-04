@@ -63,10 +63,9 @@ class HomeFragment : Fragment() {
                 add(TestItem("Wi-Fi", ds.wifi, true to false))
                 add(TestItem("Bluetooth", ds.bluetooth, true to false))
                 add(TestItem("Location", ds.location, true to false))
-                add(TestItem("Google acc.", ds.googleAccuracy, true to false))
                 add(TestItem("Wi-Fi scan", ds.wifiScanning, true to false))
+                add(TestItem("Bluetooth scan", ds.bluetoothScanning, true to false))
                 ds.mobileData?.let { add(TestItem("Mobile data", it, true to false)) }
-                // airplane last, reverse order
                 add(TestItem("Airplane mode", ds.airplane, false to true))
             }
 
