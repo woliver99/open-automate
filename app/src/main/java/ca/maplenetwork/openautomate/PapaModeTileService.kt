@@ -65,7 +65,7 @@ class PapaModeTileService : TileService() {
             deviceStates.mobileData
         ).forEach { stateManager ->
             val listener = StateListener { updateTile() }
-            stateManager.addListener(listener)
+            stateManager.addListener(listener, false)
             listeners += stateManager to listener
         }
         updateTile()

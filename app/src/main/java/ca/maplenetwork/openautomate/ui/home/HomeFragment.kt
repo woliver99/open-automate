@@ -21,7 +21,6 @@ import kotlinx.coroutines.withContext
 class HomeFragment : Fragment() {
 
     private val deviceStates by lazy { (requireActivity().application as App).deviceStates }
-    private val context by lazy { requireContext() }
 
     private var _binding: FragmentHomeBinding? = null
     // This property is only valid between onCreateView and onDestroyView.
@@ -46,7 +45,6 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, saved: Bundle?) {
         binding.testStatesButton.setOnClickListener {
-
             // 1️⃣ build the test plan
             data class TestItem(
                 val name: String,
@@ -65,7 +63,7 @@ class HomeFragment : Fragment() {
             }
 
             // 2️⃣ show a non-cancelable progress dialog
-            val progressDlg = MaterialAlertDialogBuilder(context)
+            val progressDlg = MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Running self-test…")
                 .setMessage("Preparing…")
                 .setCancelable(false)
@@ -131,7 +129,7 @@ class HomeFragment : Fragment() {
                     "❌ Failures:\n• " + failures.joinToString("\n• ")
                 }
 
-                MaterialAlertDialogBuilder(context)
+                MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Self-Test Report")
                     .setMessage(finalMsg)
                     .setPositiveButton("OK", null)

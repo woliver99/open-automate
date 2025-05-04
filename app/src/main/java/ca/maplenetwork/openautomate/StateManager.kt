@@ -16,6 +16,7 @@ fun interface StateListener {
 
 class StateManager(
     private val context: Context,
+    val name: String,
     private val getState: () -> Boolean,
     private val setState: (Boolean) -> Unit,
     private val toggleState: (() -> Boolean)? = null,
@@ -32,10 +33,10 @@ class StateManager(
         new
     }
 
-    fun addListener(l: StateListener) {
+    fun addListener(l: StateListener, notifyNow: Boolean = true) {
         if (listeners.isEmpty()) registerListener()
         listeners += l
-        l.onChanged(get())      // immediate first callback
+        if (notifyNow) l.onChanged(get())
     }
 
     fun removeListener(l: StateListener) {

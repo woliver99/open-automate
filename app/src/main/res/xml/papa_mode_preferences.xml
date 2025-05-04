@@ -16,37 +16,37 @@
     <!-- 2) Predefined-defaults switches -->
     <PreferenceCategory
         android:title="Default States">
-        <SwitchPreferenceCompat
+        <SwitchPreference
             android:key="default_airplane"
             android:title="Airplane Mode"
             android:defaultValue="false" />
 
-        <SwitchPreferenceCompat
+        <SwitchPreference
             android:key="default_wifi"
             android:title="Wi-Fi"
             android:defaultValue="true" />
 
-        <SwitchPreferenceCompat
+        <SwitchPreference
             android:key="default_bluetooth"
             android:title="Bluetooth"
             android:defaultValue="false" />
 
-        <SwitchPreferenceCompat
+        <SwitchPreference
             android:key="default_location"
             android:title="Location"
             android:defaultValue="true" />
 
-        <SwitchPreferenceCompat
+        <SwitchPreference
             android:key="default_wifiScan"
             android:title="Wi-Fi Scanning"
             android:defaultValue="true" />
 
-        <SwitchPreferenceCompat
+        <SwitchPreference
             android:key="default_btScan"
             android:title="Bluetooth Scanning"
             android:defaultValue="true" />
 
-        <SwitchPreferenceCompat
+        <SwitchPreference
             android:key="default_mobileData"
             android:title="Mobile Data"
             android:defaultValue="true" />

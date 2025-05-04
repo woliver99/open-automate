@@ -27,6 +27,7 @@ class DeviceStates(context: Context) {
         val key = Settings.Global.AIRPLANE_MODE_ON
         StateManager(
             context   = appContext,
+            name = "airplane",
             getState  = { Shell.exec("cmd connectivity airplane-mode").contains("enabled") },
             setState  = { on -> Shell.exec("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}") },
             source    = UriSource(Settings.Global.getUriFor(key))
@@ -37,6 +38,7 @@ class DeviceStates(context: Context) {
         val key = Settings.Global.WIFI_ON
         StateManager(
             context   = appContext,
+            name = "wifi",
             getState  = {
                 val value =Shell.exec("settings get global $key")
                 (value == "1") || (value == "2")
@@ -52,6 +54,7 @@ class DeviceStates(context: Context) {
         val key = Settings.Global.BLUETOOTH_ON
         StateManager(
             context   = appContext,
+            name = "bluetooth",
             getState  = { Shell.exec("settings get global $key") == "1" },
             setState  = { on ->
                 Shell.exec("svc bluetooth ${if (on) "enable" else "disable"}")
@@ -70,6 +73,7 @@ class DeviceStates(context: Context) {
         }
         StateManager(
             context   = appContext,
+            name = "location",
             getState  = { Shell.exec("cmd location is-location-enabled").contains("true") },
             setState  = { on -> Shell.exec("cmd location set-location-enabled $on") },
             source    = IntentSource(filter)
@@ -120,6 +124,7 @@ class DeviceStates(context: Context) {
         val key = "wifi_scan_always_enabled"
         StateManager(
             context    = appContext,
+            name = "wifi_scanning",
             getState   = { Shell.exec("settings get global $key") == "1" },
             setState   = { on ->
                 Shell.exec("settings put global $key ${if (on) 1 else 0}")
@@ -132,6 +137,7 @@ class DeviceStates(context: Context) {
         val key = "ble_scan_always_enabled"
         StateManager(
             context = appContext,
+            name = "bluetooth_scanning",
             getState = { Shell.exec("settings get global $key") == "1" },
             setState = { on ->
                 Shell.exec("settings put global $key ${if (on) 1 else 0}")
@@ -162,6 +168,7 @@ class DeviceStates(context: Context) {
     private fun setMobileDataVariable(key: String) {
         mobileData = StateManager(
             context  = appContext,
+            name = "mobile_data",
             getState = { Shell.exec("settings get global $key") == "1" },
             setState = { on ->
                 Shell.exec("svc data ${if (on) "enable" else "disable"}")
