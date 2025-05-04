@@ -47,6 +47,7 @@ class PapaModeTileService : TileService() {
                     }
                     applyPapaStates()
                 }
+                updateTile()
             } catch (e: IOException) {
                 Log.e("PapaModeTile", "Shell.exec failed", e)
             }
