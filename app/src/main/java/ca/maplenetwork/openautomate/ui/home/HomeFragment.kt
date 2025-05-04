@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import ca.maplenetwork.openautomate.App
 import ca.maplenetwork.openautomate.MainActivity
 import ca.maplenetwork.openautomate.StateManager
 import ca.maplenetwork.openautomate.databinding.FragmentHomeBinding
@@ -19,13 +20,11 @@ import kotlinx.coroutines.withContext
 
 class HomeFragment : Fragment() {
 
-    private val mainActivity: MainActivity?
-        get() = activity as? MainActivity
+    private val deviceStates by lazy { (requireActivity().application as App).deviceStates }
+    private val context by lazy { requireContext() }
 
     private var _binding: FragmentHomeBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -47,8 +46,6 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, saved: Bundle?) {
         binding.testStatesButton.setOnClickListener {
-            val context = context ?: return@setOnClickListener
-            val ds = mainActivity?.deviceStates ?: return@setOnClickListener
 
             // 1️⃣ build the test plan
             data class TestItem(
@@ -58,13 +55,13 @@ class HomeFragment : Fragment() {
             )
 
             val plan = buildList {
-                add(TestItem("Wi-Fi", ds.wifi, true to false))
-                add(TestItem("Bluetooth", ds.bluetooth, true to false))
-                add(TestItem("Location", ds.location, true to false))
-                add(TestItem("Wi-Fi scan", ds.wifiScanning, true to false))
-                add(TestItem("Bluetooth scan", ds.bluetoothScanning, true to false))
-                ds.mobileData?.let { add(TestItem("Mobile data", it, true to false)) }
-                add(TestItem("Airplane mode", ds.airplane, false to true))
+                add(TestItem("Wi-Fi", deviceStates.wifi, true to false))
+                add(TestItem("Bluetooth", deviceStates.bluetooth, true to false))
+                add(TestItem("Location", deviceStates.location, true to false))
+                add(TestItem("Wi-Fi scan", deviceStates.wifiScanning, true to false))
+                add(TestItem("Bluetooth scan", deviceStates.bluetoothScanning, true to false))
+                deviceStates.mobileData?.let { add(TestItem("Mobile data", it, true to false)) }
+                add(TestItem("Airplane mode", deviceStates.airplane, false to true))
             }
 
             // 2️⃣ show a non-cancelable progress dialog

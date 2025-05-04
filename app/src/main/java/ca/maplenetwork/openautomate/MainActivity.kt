@@ -29,8 +29,6 @@ class MainActivity : AppCompatActivity() {
     private var shizukuDlg: AlertDialog? = null
     private var shizukuListener: Shizuku.OnRequestPermissionResultListener? = null
 
-    var deviceStates: DeviceStates? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -57,10 +55,7 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        ensureShizuku {
-            deviceStates = DeviceStates(this)
-            Toast.makeText(this, "App Shizuku Enabled", Toast.LENGTH_LONG).show()
-        }
+        ensureShizuku {}
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
