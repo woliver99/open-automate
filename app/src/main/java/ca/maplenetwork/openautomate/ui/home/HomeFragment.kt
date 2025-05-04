@@ -144,5 +144,9 @@ class HomeFragment : Fragment() {
                     .show()
             }
         }
+
+        binding.testButton.setOnClickListener {
+            mainActivity?.deviceStates?.googleAccuracy?.toggle()
+        }
     }
 }
