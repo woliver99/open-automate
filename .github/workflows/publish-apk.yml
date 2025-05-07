@@ -1,0 +1,103 @@
+name: Build Release APK and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Extract Commit Message
+      id: commit-message
+      run: |
+        COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+        COMMIT_TITLE=$(echo "$COMMIT_MESSAGE" | head -n 1)
+        COMMIT_DESCRIPTION=$(echo "$COMMIT_MESSAGE" | tail -n +2 | sed '/^$/d' | tr '\n' ' ') # Replacing newlines with spaces
+    
+        if [[ -z "$COMMIT_DESCRIPTION" ]]; then
+          echo "No commit description provided."
+          COMMIT_DESCRIPTION="No description"
+        fi
+    
+        echo "Commit title: $COMMIT_TITLE"
+        echo "Commit description: $COMMIT_DESCRIPTION"
+        echo "COMMIT_TITLE=$(echo $COMMIT_TITLE)" >> $GITHUB_ENV
+        echo "COMMIT_DESCRIPTION=$(echo $COMMIT_DESCRIPTION)" >> $GITHUB_ENV
+
+    - name: Extract APK version
+      run: |
+        VERSION_NAME=$(grep versionCode app/build.gradle.kts | awk '{print $3}' | tr -d '"')
+        echo "APK version: $VERSION_NAME"
+        echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
+    - name: Set up JDK 17
+      if: success()
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      if: success()
+      uses: gradle/actions/setup-gradle@v3.1.0
+
+    - name: Decode keystore
+      run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > my-release-key.jks
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x ./gradlew
+
+    - name: Build and Sign APK
+      run: ./gradlew assembleRelease
+      env:
+        KEYSTORE_PATH: ${{ github.workspace }}/my-release-key.jks
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+    - name: Calculate SHA-256 Hash
+      run: |
+        APK_PATH="${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk"
+        HASH_PATH="${{ github.workspace }}/hash.txt"
+        sha256sum "$APK_PATH" | awk '{print $1}' > "$HASH_PATH"
+
+    - name: Create GitHub Release
+      id: create_release
+      run: |
+        RELEASE_TAG=v$VERSION_NAME
+        echo "Creating release $RELEASE_TAG"
+        gh release create $RELEASE_TAG \
+          --title "$COMMIT_TITLE" \
+          --notes "$COMMIT_DESCRIPTION" \
+          --draft
+        echo "::set-output name=tag_name::$RELEASE_TAG"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload APK to Release
+      run: |
+        APK_PATH="${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk"
+        gh release upload ${{ steps.create_release.outputs.tag_name }} "$APK_PATH" --clobber
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Hash as Release Asset
+      run: |
+        HASH_PATH="${{ github.workspace }}/hash.txt"
+        gh release upload ${{ steps.create_release.outputs.tag_name }} "$HASH_PATH" --clobber
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish the draft release
+      run: |
+        gh release edit ${{ steps.create_release.outputs.tag_name }} --draft=false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
