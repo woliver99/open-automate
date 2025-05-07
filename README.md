@@ -5,7 +5,7 @@
 
 ## Auto Update
 
-Open Automate uses [Obtanium](https://github.com/ImranR98/Obtainium) for automatic updates. [Click here to import](obtainium://app/https://github.com/woliver99/open-automate/blob/master/obtainium.json)
+Open Automate uses [Obtanium](https://github.com/ImranR98/Obtainium) for automatic updates. Link import: obtainium://app/https://github.com/woliver99/open-automate/blob/master/obtainium.json
 
 ## Features
 
