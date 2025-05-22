@@ -25,6 +25,7 @@ object Shell {
         val output = BufferedReader(InputStreamReader(FileInputStream(proc.inputStream.fileDescriptor)))
             .use { it.readText() }
         proc.waitFor()
+        proc.destroy()
         return output.trimEnd()
     }
 }
