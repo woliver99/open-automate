@@ -10,6 +10,11 @@ data class StateOption(val key: String, val title: String)
 
 class DeviceStates(context: Context) {
     private val appContext = context.applicationContext
+    private val shell = Shell.create()
+
+    fun close() {
+        shell.close()
+    }
 
     companion object {
         fun getAvailableStateOptions(): List<StateOption> = listOf(
@@ -28,8 +33,8 @@ class DeviceStates(context: Context) {
         StateManager(
             context   = appContext,
             name = "airplane",
-            getState  = { Shell.exec("cmd connectivity airplane-mode").contains("enabled") },
-            setState  = { on -> Shell.exec("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}") },
+            getState  = { shell.exec("cmd connectivity airplane-mode").contains("enabled") },
+            setState  = { on -> shell.exec("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}") },
             source    = UriSource(Settings.Global.getUriFor(key))
         )
     }
@@ -40,10 +45,10 @@ class DeviceStates(context: Context) {
             context   = appContext,
             name = "wifi",
             getState  = {
-                val value =Shell.exec("settings get global $key")
+                val value = shell.exec("settings get global $key")
                 (value == "1") || (value == "2")
             },
-            setState  = { on -> Shell.exec("svc wifi ${if (on) "enable" else "disable"}") },
+            setState  = { on -> shell.exec("svc wifi ${if (on) "enable" else "disable"}") },
             source    = UriSource(Settings.Global.getUriFor(key))
         )
     }
@@ -55,9 +60,9 @@ class DeviceStates(context: Context) {
         StateManager(
             context   = appContext,
             name = "bluetooth",
-            getState  = { Shell.exec("settings get global $key") == "1" },
+            getState  = { shell.exec("settings get global $key") == "1" },
             setState  = { on ->
-                Shell.exec("svc bluetooth ${if (on) "enable" else "disable"}")
+                shell.exec("svc bluetooth ${if (on) "enable" else "disable"}")
             },
             source    = UriSource(Settings.Global.getUriFor(Settings.Global.BLUETOOTH_ON))
         )
@@ -74,8 +79,8 @@ class DeviceStates(context: Context) {
         StateManager(
             context   = appContext,
             name = "location",
-            getState  = { Shell.exec("cmd location is-location-enabled").contains("true") },
-            setState  = { on -> Shell.exec("cmd location set-location-enabled $on") },
+            getState  = { shell.exec("cmd location is-location-enabled").contains("true") },
+            setState  = { on -> shell.exec("cmd location set-location-enabled $on") },
             source    = IntentSource(filter)
         )
     }
@@ -125,9 +130,9 @@ class DeviceStates(context: Context) {
         StateManager(
             context    = appContext,
             name = "wifi_scanning",
-            getState   = { Shell.exec("settings get global $key") == "1" },
+            getState   = { shell.exec("settings get global $key") == "1" },
             setState   = { on ->
-                Shell.exec("settings put global $key ${if (on) 1 else 0}")
+                shell.exec("settings put global $key ${if (on) 1 else 0}")
             },
             source     = UriSource(Settings.Global.getUriFor(key))
         )
@@ -138,9 +143,9 @@ class DeviceStates(context: Context) {
         StateManager(
             context = appContext,
             name = "bluetooth_scanning",
-            getState = { Shell.exec("settings get global $key") == "1" },
+            getState = { shell.exec("settings get global $key") == "1" },
             setState = { on ->
-                Shell.exec("settings put global $key ${if (on) 1 else 0}")
+                shell.exec("settings put global $key ${if (on) 1 else 0}")
             },
             source  = UriSource(Settings.Global.getUriFor(key))
         )
@@ -169,16 +174,16 @@ class DeviceStates(context: Context) {
         mobileData = StateManager(
             context  = appContext,
             name = "mobile_data",
-            getState = { Shell.exec("settings get global $key") == "1" },
+            getState = { shell.exec("settings get global $key") == "1" },
             setState = { on ->
-                Shell.exec("svc data ${if (on) "enable" else "disable"}")
+                shell.exec("svc data ${if (on) "enable" else "disable"}")
             },
             source   = UriSource(Settings.Global.getUriFor(key))
         )
     }
 
     private fun listMobileDataOptions(): List<String> {
-        val raw = Shell.exec("settings list global mobile_data")
+        val raw = shell.exec("settings list global mobile_data")
 
         val prefix = "mobile_data"
         return raw.lineSequence()
@@ -190,12 +195,12 @@ class DeviceStates(context: Context) {
     }
 
     private fun getDataSimSuffix(): String {
-        val raw = Shell.exec("settings get global multi_sim_data_call")
+        val raw = shell.exec("settings get global multi_sim_data_call")
         return raw
     }
 
     private fun hasAnySim(): Boolean {
-        val simStates = Shell.exec("getprop gsm.sim.state")
+        val simStates = shell.exec("getprop gsm.sim.state")
             .split(",")
             .map(String::trim)
 

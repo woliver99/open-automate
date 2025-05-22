@@ -11,4 +11,9 @@ class App : Application() {
         // This hooks up all Activities (including those hosting PreferenceFragmentCompat)
         DynamicColors.applyToActivitiesIfAvailable(this)
     }
+
+    override fun onTerminate() {
+        deviceStates.close()
+        super.onTerminate()
+    }
 }
